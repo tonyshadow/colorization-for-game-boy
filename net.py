@@ -30,9 +30,11 @@ def _conv_layer(inputs, kernel_shape, stride, index):
         conv = tf.nn.conv2d(inputs, kernel, [1, stride, stride, 1], padding='SAME')
         biases = _variable_on_cpu('biases', kernel_shape[3:], tf.constant_initializer(0.0))
         pre_activation = tf.nn.bias_add(conv, biases)
-        conv_relu = tf.nn.relu(pre_activation, name=scope.name)
+        # conv_relu = tf.nn.relu(pre_activation, name=scope.name)
 
-        return conv_relu
+        # Leaky ReLU
+        conv_rect = tf.maximum(0.1 * pre_activation, pre_activation, name='conv_%s' % index)
+        return conv_rect
 
 
 def _deconv_layer(inputs, kernel_shape, stride, index):
