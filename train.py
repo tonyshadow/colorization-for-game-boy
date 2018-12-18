@@ -16,21 +16,8 @@ import cfg
 import net
 import image
 
-FLAGS = tf.flags.FLAGS
 
-tf.flags.DEFINE_integer('max_steps', 100000,
-                        """The weight decay.""")
-
-
-# def train_model(checkpoint_dir, image_list, batch_size):
-#         # summaries = tf.summary.scalar('learning_rate', 1)
-#
-#         # summary_op = tf.summary.merge(summaries)
-#
-#         summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
-
-
-def train(checkpoint_dir, image_list):
+def train(model_dir, image_list):
     with tf.Graph().as_default():
         global_step = tf.train.get_or_create_global_step()
 
@@ -82,28 +69,31 @@ def train(checkpoint_dir, image_list):
         sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
         sess.run(init)
 
+        # Create summary writer
         # summary_writer = tf.summary.FileWriter(checkpoint_dir + "model", sess.graph)
 
-        # restore previous model if there is one
-        ckpt = tf.train.get_checkpoint_state(checkpoint_dir + "model")
+        model_dir = os.path.join(model_dir, 'model')
+
+        # Find previous model and restore it
+        ckpt = tf.train.get_checkpoint_state(model_dir)
         if ckpt and ckpt.model_checkpoint_path:
-            print("Restoring previous model...")
+            print("Restoring model...")
             try:
                 saver.restore(sess, ckpt.model_checkpoint_path)
                 print("Model restored")
-            except:
-                print("Could not restore model")
-                pass
+            except ValueError:
+                print("Can not restore model")
 
         step = int(sess.run(global_step))
         gstep = step
-        while gstep < FLAGS.max_steps:
+        while gstep < cfg.MAX_STEPS:
             start_time = time.time()
             _, loss_value = sess.run([train_op, loss])
             duration = time.time() - start_time
 
             assert not np.isnan(loss_value), 'Model diverged with loss = NaN'
 
+            step += 1
             if step % 1 == 0:
                 num_examples_per_step = cfg.BATCH_SIZE
                 examples_per_sec = num_examples_per_step / duration
@@ -119,11 +109,10 @@ def train(checkpoint_dir, image_list):
             #     summary_writer.add_summary(summary_str, step)
 
             # Save the model checkpoint periodically.
-            if step % 1000 == 0 or (gstep + 1) == FLAGS.max_steps:
+            if step % 1000 == 0 or (gstep + 1) == cfg.MAX_STEPS:
                 print("Saving model")
-                saver.save(sess, checkpoint_dir + "model/model.ckpt", global_step=global_step)
+                saver.save(sess, os.path.join(model_dir, 'model.ckpt'), global_step=global_step)
 
-            step += 1
             gstep = int(sess.run(global_step))
 
         return
@@ -161,7 +150,6 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-
     if sys.argv[1] == "--help" or sys.argv[1] == "-h" or len(sys.argv) < 2:
         print()
         print("-c --checkpoint_dir <str> [path to save the model]")
