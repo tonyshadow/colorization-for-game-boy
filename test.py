@@ -12,34 +12,33 @@ import net
 
 
 def test(model_dir, image_dir):
-    with tf.Graph().as_default():
-        image = cv2.imread(image_dir)
-        image = cv2.resize(image, (160, 144)).astype('float32')
-        image = np.asarray([image])
+    image = cv2.imread(image_dir)
+    image = cv2.resize(image, (160, 144)).astype('float32')
+    image = np.asarray([image])
 
-        # Build a Graph that computes the logits predictions from the
-        # inference model.
-        logits = net.inference(image)
+    # Build a Graph that computes the logits predictions from the
+    # inference model.
+    logits = net.inference(image)
 
-        # Create a saver.
-        saver = tf.train.Saver(tf.global_variables())
+    # Create a saver.
+    saver = tf.train.Saver(tf.global_variables())
 
-        with tf.Session() as sess:
-            # Find previous model and restore it
-            ckpt = tf.train.get_checkpoint_state(model_dir)
-            if ckpt and ckpt.model_checkpoint_path:
-                print("Restoring model...")
-                try:
-                    saver.restore(sess, ckpt.model_checkpoint_path)
-                    print("Model restored")
-                except ValueError:
-                    print("Can not restore model")
+    with tf.Session() as sess:
+        # Find previous model and restore it
+        ckpt = tf.train.get_checkpoint_state(model_dir)
+        if ckpt and ckpt.model_checkpoint_path:
+            print("Restoring model...")
+            try:
+                saver.restore(sess, ckpt.model_checkpoint_path)
+                print("Model restored")
+            except ValueError:
+                print("Can not restore model")
 
-            output = sess.run([logits])[0][0]
+        output = sess.run([logits])[0][0]
 
-        dir_out = image_dir[:image_dir.index('.png')]+'_output.png'
-        print ('Store output at '+dir_out)
-        cv2.imwrite(dir_out, output)
+    dir_out = image_dir[:image_dir.index('.png')]+'_output.png'
+    print ('Store output at '+dir_out)
+    cv2.imwrite(dir_out, output)
 
 
 if __name__ == "__main__":
