@@ -12,10 +12,8 @@ import tensorflow as tf
 import numpy as np
 from optparse import OptionParser
 
-import cfg, net
-
-sys.path.insert(0, '../utils/')
-
+import cfg
+import net
 import feed_dict as fd
 
 FLAGS = tf.flags.FLAGS

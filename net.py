@@ -4,7 +4,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 
-from bak import cfg
+import cfg
 
 
 def _variable_on_cpu(name, shape, initializer):

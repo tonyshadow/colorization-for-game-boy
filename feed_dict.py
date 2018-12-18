@@ -9,7 +9,7 @@ import os
 import cv2
 import numpy as np
 
-def get_batch(batch_size, image_list, normalize):
+def get_batch(batch_size, image_list, normalize=False):
    shuffle(image_list)
    image_list = image_list[:batch_size]
 
