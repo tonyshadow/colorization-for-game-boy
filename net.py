@@ -87,15 +87,15 @@ def inference(inputs):
 
     # decoder
     conv9 = _conv_layer(conv8, [3, 3, 256, 128], 1, 9)
-    conv10 = _deconv_layer(conv9, [3, 3, 128, 128], 1, 10)
+    conv10 = _conv_layer(conv9, [3, 3, 128, 128], 1, 10)
     conv11 = _conv_layer(conv10, [1, 1, 128, 64], 1, 11)
     conv12 = _conv_layer(conv11, [1, 1, 64, 64], 1, 12)
-    conv13 = _deconv_layer(conv12, [1, 1, 64, 32], 1, 13)
+    conv13 = _conv_layer(conv12, [1, 1, 64, 32], 1, 13)
     conv14 = _conv_layer(conv13, [1, 1, 32, 32], 1, 14)
-    conv15 = _deconv_layer(conv14, [1, 1, 32, 16], 1, 15)
-    conv16 = _deconv_layer(conv15, [1, 1, 16, 16], 1, 16)
-    conv17 = _deconv_layer(conv16, [1, 1, 16, 8], 1, 17)
-    conv18 = _deconv_layer(conv17, [1, 1, 8, 3], 1, 18)
+    conv15 = _conv_layer(conv14, [1, 1, 32, 16], 1, 15)
+    conv16 = _conv_layer(conv15, [1, 1, 16, 16], 1, 16)
+    conv17 = _conv_layer(conv16, [1, 1, 16, 8], 1, 17)
+    conv18 = _conv_layer(conv17, [1, 1, 8, 3], 1, 18)
 
     return conv18
 
