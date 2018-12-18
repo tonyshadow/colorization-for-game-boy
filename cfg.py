@@ -12,3 +12,4 @@ INITIAL_LEARNING_RATE = 3e-5      # Initial learning rate.
 
 BATCH_SIZE = 10
 WEIGHT_DECAY = 0.001
+MAX_STEPS = 10000

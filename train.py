@@ -16,11 +16,6 @@ import cfg
 import net
 import image
 
-FLAGS = tf.flags.FLAGS
-
-tf.flags.DEFINE_integer('max_steps', 100000,
-                        """The weight decay.""")
-
 
 def train(model_dir, image_list):
     with tf.Graph().as_default():
@@ -91,7 +86,7 @@ def train(model_dir, image_list):
 
         step = int(sess.run(global_step))
         gstep = step
-        while gstep < FLAGS.max_steps:
+        while gstep < cfg.MAX_STEPS:
             start_time = time.time()
             _, loss_value = sess.run([train_op, loss])
             duration = time.time() - start_time
@@ -114,7 +109,7 @@ def train(model_dir, image_list):
             #     summary_writer.add_summary(summary_str, step)
 
             # Save the model checkpoint periodically.
-            if step % 1000 == 0 or (gstep + 1) == FLAGS.max_steps:
+            if step % 1000 == 0 or (gstep + 1) == cfg.MAX_STEPS:
                 print("Saving model")
                 saver.save(sess, os.path.join(model_dir, 'model.ckpt'), global_step=global_step)
 
@@ -155,7 +150,6 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-
     if sys.argv[1] == "--help" or sys.argv[1] == "-h" or len(sys.argv) < 2:
         print()
         print("-c --checkpoint_dir <str> [path to save the model]")
