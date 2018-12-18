@@ -103,20 +103,3 @@ def inference(inputs):
 def loss(logits, labels):
     l2_loss = tf.nn.l2_loss(logits - labels)
     return l2_loss
-
-
-def _add_loss_summaries(total_loss):
-    # Compute the moving average of all individual losses and the total loss.
-    loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
-    losses = tf.get_collection('losses')
-    loss_averages_op = loss_averages.apply(losses + [total_loss])
-
-    # Attach a scalar summary to all individual losses and the total loss; do the
-    # same for the averaged version of the losses.
-    for l in losses + [total_loss]:
-        # Name each loss as '(raw)' and name the moving average version of the loss
-        # as the original loss name.
-        tf.summary.scalar(l.op.name + ' (raw)', l)
-        tf.summary.scalar(l.op.name, loss_averages.average(l))
-
-    return loss_averages_op
