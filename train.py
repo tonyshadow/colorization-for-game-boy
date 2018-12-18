@@ -2,22 +2,21 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import argparse
 import os
-import sys
 import time
 from datetime import datetime
 
 import fnmatch
 import tensorflow as tf
 import numpy as np
-from optparse import OptionParser
 
 import cfg
 import net
 import image
 
 
-def train(model_dir, image_list):
+def train(model_dir, image_paths):
     with tf.Graph().as_default():
         global_step = tf.train.get_or_create_global_step()
 
@@ -36,7 +35,7 @@ def train(model_dir, image_list):
         opt = tf.train.AdadeltaOptimizer(lr)
 
         # Get original images and gray images
-        original_images, gray_images = image.read_images(image_list, cfg.BATCH_SIZE)
+        original_images, gray_images = image.read_images(image_paths, cfg.BATCH_SIZE)
 
         # Build a Graph that computes the logits predictions from the inference model.
         logits = net.inference(gray_images)
@@ -115,46 +114,22 @@ def train(model_dir, image_list):
 
             gstep = int(sess.run(global_step))
 
-        return
-
-
-def main(argv=None):
-    parser = OptionParser(usage='usage')
-    parser.add_option('-c', '--checkpoint_dir',          type='str')
-    parser.add_option('-d', '--data_dir', type='str')
-
-    opts, args = parser.parse_args()
-    opts = vars(opts)
-
-    checkpoint_dir = opts['checkpoint_dir']
-    data_dir = opts['data_dir']
-
-    if checkpoint_dir is None:
-        print ("checkpoint_dir is required")
-        exit()
-
-    print()
-    print('checkpoint_dir: ' + str(checkpoint_dir))
-    print('data_dir:       ' + str(data_dir))
-    print()
-
-    pattern = "*resized.png"
-    image_list = list()
-    for d, s, fList in os.walk(data_dir + '/images'):
-        for filename in fList:
-            if fnmatch.fnmatch(filename, pattern):
-                image_list.append(os.path.join(d, filename))
-
-    print(str(len(image_list)) + ' images...')
-    train(checkpoint_dir, image_list)
-
 
 if __name__ == "__main__":
-    if sys.argv[1] == "--help" or sys.argv[1] == "-h" or len(sys.argv) < 2:
-        print()
-        print("-c --checkpoint_dir <str> [path to save the model]")
-        print("-d --data_dir       <str> [path to root image folder]")
-        print()
-        exit()
+    parser = argparse.ArgumentParser(description='Train a colorization model.')
+    parser.add_argument('data_dir',
+                        help='Directory of the training images, should have two sub-directories: gray/ and images/')
+    parser.add_argument('model_dir', default='./', help='Specify the directory to store the model')
 
-    tf.app.run()
+    args = parser.parse_args()
+
+    pattern = "*.png"
+    image_list = []
+    for dirpath, dirnames, filenames in os.walk(os.path.join(args.data_dir, 'images')):
+        for filename in filenames:
+            if fnmatch.fnmatch(filename, pattern):
+                image_list.append(os.path.join(dirpath, filename))
+
+    print("Found %s images" % len(image_list))
+
+    train(args.model_dir, image_list)
