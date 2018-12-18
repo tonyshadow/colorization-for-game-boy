@@ -108,7 +108,7 @@ def train(model_dir, image_paths):
             #     summary_writer.add_summary(summary_str, step)
 
             # Save the model checkpoint periodically.
-            if step % 1000 == 0 or (gstep + 1) == cfg.MAX_STEPS:
+            if step % 100 == 0 or (gstep + 1) == cfg.MAX_STEPS:
                 print("Saving model")
                 saver.save(sess, os.path.join(model_dir, 'model.ckpt'), global_step=global_step)
 
