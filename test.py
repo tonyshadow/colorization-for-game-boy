@@ -5,6 +5,7 @@ from __future__ import print_function
 import argparse
 
 import cv2
+import numpy as np
 import tensorflow as tf
 
 import net
@@ -13,7 +14,8 @@ import net
 def test(model_dir, image_dir):
     with tf.Graph().as_default():
         image = cv2.imread(image_dir)
-        image = cv2.resize(image, (160, 144)).astype('float')
+        image = cv2.resize(image, (160, 144)).astype('float32')
+        image = np.asarray([image])
 
         # Build a Graph that computes the logits predictions from the
         # inference model.
@@ -33,10 +35,11 @@ def test(model_dir, image_dir):
                 except ValueError:
                     print("Can not restore model")
 
-        output = sess.run([logits])[0]
-        dir_out = image[:image.index('.png')]+'_output.png'
+            output = sess.run([logits])[0][0]
+
+        dir_out = image_dir[:image_dir.index('.png')]+'_output.png'
         print ('Store output at '+dir_out)
-        cv2.imwrite(dir_out, output[0, :, :, :])
+        cv2.imwrite(dir_out, output)
 
 
 if __name__ == "__main__":
