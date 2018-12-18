@@ -12,7 +12,7 @@ import tensorflow as tf
 import numpy as np
 from optparse import OptionParser
 
-from bak import cfg, net
+import cfg, net
 
 sys.path.insert(0, '../utils/')
 
