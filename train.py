@@ -17,55 +17,29 @@ import image
 
 
 def train(model_dir, image_paths):
-    with tf.Graph().as_default():
-        global_step = tf.train.get_or_create_global_step()
+    global_step = tf.train.get_or_create_global_step()
 
-        # Variables that affect learning rate.
-        num_batches_per_epoch = cfg.NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN / cfg.BATCH_SIZE
-        decay_steps = int(num_batches_per_epoch * cfg.NUM_EPOCHS_PER_DECAY)
+    # Create gray images and original images placeholders
+    gray_images = tf.placeholder(tf.float32, shape=(cfg.BATCH_SIZE, 144, 160, 3))
+    original_images = tf.placeholder(tf.float32, shape=(cfg.BATCH_SIZE, 144, 160, 3))
 
-        # Decay the learning rate exponentially based on the number of steps.
-        lr = tf.train.exponential_decay(cfg.INITIAL_LEARNING_RATE,
-                                        global_step,
-                                        decay_steps,
-                                        cfg.LEARNING_RATE_DECAY_FACTOR,
-                                        staircase=True)
+    # Build a Graph that computes the logits predictions from the inference model.
+    logits = net.inference(gray_images)
 
-        # Create optimizer
-        opt = tf.train.AdadeltaOptimizer(lr)
+    # Calculate loss
+    loss = net.loss(original_images, logits)
 
-        # Get original images and gray images
-        original_images, gray_images = image.read_images(image_paths, cfg.BATCH_SIZE)
+    # Optimization
+    train_op = tf.train.AdamOptimizer(learning_rate=1e-5).minimize(loss, global_step=global_step)
 
-        # Build a Graph that computes the logits predictions from the inference model.
-        logits = net.inference(gray_images)
+    # Create a saver.
+    saver = tf.train.Saver(tf.global_variables())
 
-        # Calculate loss.
-        loss = net.loss(original_images, logits)
+    # Build an initialization operation to run below.
+    init = tf.global_variables_initializer()
 
-        # Calculate the gradients
-        grads = opt.compute_gradients(loss)
-
-        # Apply gradients
-        apply_gradient_op = opt.apply_gradients(grads, global_step=global_step)
-
-        # Track the moving averages of all trainable variables.
-        variable_averages = tf.train.ExponentialMovingAverage(cfg.MOVING_AVERAGE_DECAY, global_step)
-        variables_averages_op = variable_averages.apply(tf.trainable_variables())
-
-        # Group all updates to into a single train op.
-        train_op = tf.group(apply_gradient_op, variables_averages_op)
-
-        # Create a saver.
-        saver = tf.train.Saver(tf.global_variables())
-
-        # Build an initialization operation to run below.
-        init = tf.global_variables_initializer()
-
-        # Start running operations on the Graph. allow_soft_placement must be set to
-        # True to build towers on GPU, as some of the ops do not have GPU
-        # implementations.
-        sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
+    # Start running operations on the Graph
+    with tf.Session() as sess:
         sess.run(init)
 
         # Create summary writer
@@ -83,36 +57,31 @@ def train(model_dir, image_paths):
             except ValueError:
                 print("Can not restore model")
 
-        step = int(sess.run(global_step))
-        gstep = step
-        while gstep < cfg.MAX_STEPS:
+        step = tf.train.global_step(sess, global_step)
+        while step < cfg.MAX_STEPS:
             start_time = time.time()
-            _, loss_value = sess.run([train_op, loss])
+            original, gray = image.read_images(image_paths, cfg.BATCH_SIZE)
+            _, loss_value = sess.run([train_op, loss], feed_dict={gray_images: gray, original_images: original})
             duration = time.time() - start_time
 
             assert not np.isnan(loss_value), 'Model diverged with loss = NaN'
 
             step += 1
             if step % 1 == 0:
-                num_examples_per_step = cfg.BATCH_SIZE
-                examples_per_sec = num_examples_per_step / duration
+                examples_per_sec = cfg.BATCH_SIZE / duration
                 sec_per_batch = duration
 
-                format_str = ('%s: step %d, loss = %.2f (%.1f examples/sec; %.3f '
-                              'sec/batch)')
-                print(format_str % (datetime.now(), step, loss_value,
-                                    examples_per_sec, sec_per_batch))
+                format_str = '%s: step %d, loss = %.2f (%.1f examples/sec; %.3f sec/batch'
+                print(format_str % (datetime.now(), step, loss_value, examples_per_sec, sec_per_batch))
 
             # if step % 10 == 0:
             #     summary_str = sess.run(summary_op)
             #     summary_writer.add_summary(summary_str, step)
 
             # Save the model checkpoint periodically.
-            if step % 100 == 0 or (gstep + 1) == cfg.MAX_STEPS:
+            if step % 100 == 0 or step == cfg.MAX_STEPS:
                 print("Saving model")
                 saver.save(sess, os.path.join(model_dir, 'model.ckpt'), global_step=global_step)
-
-            gstep = int(sess.run(global_step))
 
 
 if __name__ == "__main__":

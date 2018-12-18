@@ -25,12 +25,12 @@ def _conv_layer(inputs, kernel_shape, stride, index):
     with tf.variable_scope('conv_%s' % index) as scope:
         kernel = _variable_with_weight_decay('weights',
                                              shape=kernel_shape,
-                                             stddev=5e-2,
+                                             stddev=0.1,
                                              wd=cfg.WEIGHT_DECAY)
         conv = tf.nn.conv2d(inputs, kernel, [1, stride, stride, 1], padding='SAME')
         biases = _variable_on_cpu('biases', kernel_shape[3:], tf.constant_initializer(0.1))
         pre_activation = tf.nn.bias_add(conv, biases)
-        conv_relu = tf.nn.relu(pre_activation, name=scope.name)
+        conv_relu = tf.nn.leaky_relu(pre_activation, alpha=0.1)
 
         return conv_relu
 
