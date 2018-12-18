@@ -22,15 +22,7 @@ tf.flags.DEFINE_integer('max_steps', 100000,
                         """The weight decay.""")
 
 
-# def train_model(checkpoint_dir, image_list, batch_size):
-#         # summaries = tf.summary.scalar('learning_rate', 1)
-#
-#         # summary_op = tf.summary.merge(summaries)
-#
-#         summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
-
-
-def train(checkpoint_dir, image_list):
+def train(model_dir, image_list):
     with tf.Graph().as_default():
         global_step = tf.train.get_or_create_global_step()
 
@@ -82,18 +74,19 @@ def train(checkpoint_dir, image_list):
         sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
         sess.run(init)
 
+        # Create summary writer
         # summary_writer = tf.summary.FileWriter(checkpoint_dir + "model", sess.graph)
 
-        # restore previous model if there is one
-        ckpt = tf.train.get_checkpoint_state(checkpoint_dir + "model")
-        if ckpt and ckpt.model_checkpoint_path:
-            print("Restoring previous model...")
-            try:
-                saver.restore(sess, ckpt.model_checkpoint_path)
-                print("Model restored")
-            except:
-                print("Could not restore model")
-                pass
+        model_dir = os.path.join(model_dir, 'model')
+
+        # Restore previous model
+        ckpt = tf.train.get_checkpoint_state(model_dir)
+        print("Finding previous model...")
+        try:
+            saver.restore(sess, ckpt.model_checkpoint_path)
+            print("Model restored")
+        except ValueError:
+            print("No previous model")
 
         step = int(sess.run(global_step))
         gstep = step
@@ -121,7 +114,7 @@ def train(checkpoint_dir, image_list):
             # Save the model checkpoint periodically.
             if step % 1000 == 0 or (gstep + 1) == FLAGS.max_steps:
                 print("Saving model")
-                saver.save(sess, checkpoint_dir + "model/model.ckpt", global_step=global_step)
+                saver.save(sess, os.path.join(model_dir, 'model.ckpt'), global_step=global_step)
 
             step += 1
             gstep = int(sess.run(global_step))
