@@ -55,27 +55,49 @@ def _deconv_layer(inputs, kernel_shape, stride, index):
 
 
 def inference(inputs):
+    # # encoder
+    # conv1 = _conv_layer(inputs, [3, 3, 3, 64], 2, 1)
+    # conv2 = _conv_layer(conv1, [3, 3, 64, 128], 1, 2)
+    # conv3 = _conv_layer(conv2, [3, 3, 128, 128], 2, 3)
+    # conv4 = _conv_layer(conv3, [3, 3, 128, 256], 1, 4)
+    # conv5 = _conv_layer(conv4, [3, 3, 256, 256], 2, 5)
+    # conv6 = _conv_layer(conv5, [3, 3, 256, 512], 1, 6)
+    # conv7 = _conv_layer(conv6, [3, 3, 512, 512], 1, 7)
+    # conv8 = _conv_layer(conv7, [3, 3, 512, 256], 1, 8)
+
+    # # decoder
+    # conv9 = _conv_layer(conv8, [3, 3, 256, 128], 1, 9)
+    # conv10 = _deconv_layer(conv9, [3, 3, 128, 64], 2, 10)
+    # conv11 = _conv_layer(conv10, [3, 3, 64, 64], 1, 11)
+    # conv12 = _conv_layer(conv11, [3, 3, 64, 64], 1, 12)
+    # conv13 = _deconv_layer(conv12, [3, 3, 64, 32], 2, 13)
+    # conv14 = _conv_layer(conv13, [3, 3, 32, 32], 1, 14)
+    # conv15 = _deconv_layer(conv14, [3, 3, 32, 3], 2, 15)
+    # conv16 = _deconv_layer(conv15, [3, 3, 3, 3], 1, 16)
+
     # encoder
-    conv1 = _conv_layer(inputs, [3, 3, 3, 64], 2, 1)
-    conv2 = _conv_layer(conv1, [3, 3, 64, 128], 1, 2)
-    conv3 = _conv_layer(conv2, [3, 3, 128, 128], 2, 3)
-    conv4 = _conv_layer(conv3, [3, 3, 128, 256], 1, 4)
-    conv5 = _conv_layer(conv4, [3, 3, 256, 256], 2, 5)
-    conv6 = _conv_layer(conv5, [3, 3, 256, 512], 1, 6)
-    conv7 = _conv_layer(conv6, [3, 3, 512, 512], 1, 7)
-    conv8 = _conv_layer(conv7, [3, 3, 512, 256], 1, 8)
+    conv1 = _conv_layer(inputs, [3, 3, 3, 32], 1, 1)
+    conv2 = _conv_layer(conv1, [3, 3, 32, 32], 1, 2)
+    conv3 = _conv_layer(conv2, [3, 3, 32, 64], 1, 3)
+    conv4 = _conv_layer(conv3, [3, 3, 64, 64], 1, 4)
+    conv5 = _conv_layer(conv4, [3, 3, 64, 128], 1, 5)
+    conv6 = _conv_layer(conv5, [3, 3, 128, 128], 1, 6)
+    conv7 = _conv_layer(conv6, [3, 3, 128, 256], 1, 7)
+    conv8 = _conv_layer(conv7, [3, 3, 256, 256], 1, 8)
 
     # decoder
     conv9 = _conv_layer(conv8, [3, 3, 256, 128], 1, 9)
-    conv10 = _deconv_layer(conv9, [3, 3, 128, 64], 2, 10)
-    conv11 = _conv_layer(conv10, [3, 3, 64, 64], 1, 11)
-    conv12 = _conv_layer(conv11, [3, 3, 64, 64], 1, 12)
-    conv13 = _deconv_layer(conv12, [3, 3, 64, 32], 2, 13)
-    conv14 = _conv_layer(conv13, [3, 3, 32, 32], 1, 14)
-    conv15 = _deconv_layer(conv14, [3, 3, 32, 3], 2, 15)
-    conv16 = _deconv_layer(conv15, [3, 3, 3, 3], 1, 16)
+    conv10 = _deconv_layer(conv9, [3, 3, 128, 128], 1, 10)
+    conv11 = _conv_layer(conv10, [1, 1, 128, 64], 1, 11)
+    conv12 = _conv_layer(conv11, [1, 1, 64, 64], 1, 12)
+    conv13 = _deconv_layer(conv12, [1, 1, 64, 32], 1, 13)
+    conv14 = _conv_layer(conv13, [1, 1, 32, 32], 1, 14)
+    conv15 = _deconv_layer(conv14, [1, 1, 32, 16], 1, 15)
+    conv16 = _deconv_layer(conv15, [1, 1, 16, 16], 1, 16)
+    conv17 = _deconv_layer(conv16, [1, 1, 16, 8], 1, 17)
+    conv18 = _deconv_layer(conv17, [1, 1, 8, 3], 1, 18)
 
-    return conv16
+    return conv18
 
 
 def loss(logits, labels):
