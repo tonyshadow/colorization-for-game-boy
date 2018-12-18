@@ -2,203 +2,48 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os
-import sys
-import time
-from datetime import datetime
-
-import fnmatch
-import tensorflow as tf
-import numpy as np
-from optparse import OptionParser
-
-import cfg
-import net
-import image
+import argparse
 
 import cv2
+import tensorflow as tf
 
-FLAGS = tf.flags.FLAGS
-
-tf.flags.DEFINE_integer('max_steps', 100000,
-                        """The weight decay.""")
+import net
 
 
-# def get_feed_dict(batch_size, original_images_placeholder, gray_images_placeholder, image_list):
-
-#     original_images, gray_images = fd.get_batch(batch_size, image_list)
-
-#     feed_dict = {
-#         original_images_placeholder: original_images,
-#         gray_images_placeholder: gray_images
-#     }
-
-#     return feed_dict
-
-
-# def train_model(checkpoint_dir, image_list, batch_size):
-#         # summaries = tf.summary.scalar('learning_rate', 1)
-#
-#         # summary_op = tf.summary.merge(summaries)
-#
-#         summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
-
-
-def test(checkpoint_dir, image):
+def test(model_dir, image_dir):
     with tf.Graph().as_default():
-        global_step = tf.train.get_or_create_global_step()
+        image = cv2.imread(image_dir)
+        image = cv2.resize(image, (160, 144)).astype('float')
 
-        # # # Get images and labels for CIFAR-10.
-        # # # Force input pipeline to CPU:0 to avoid operations sometimes ending up on
-        # # # GPU and resulting in a slow down.
-        # with tf.device('/cpu:0'):
-        #     images, labels = cifar10.distorted_inputs()
-
-        # original_images_placeholder = tf.placeholder(tf.float32, shape=(1, 144, 160, 3))
-        gray_images_placeholder = tf.placeholder(tf.float32, shape=(1, 144, 160, 3))
-
-        # # image summary for tensorboard
-        # tf.summary.image('original_images', original_images_placeholder, max_outputs=100)
-        # tf.summary.image('gray_images', gray_images_placeholder, max_outputs=100)
-
-        # Build a Graph that computes the logits predictions from the inference model.
-        logits = net.inference(gray_images_placeholder)
-
-        # Calculate loss.
-        # loss = net.loss(original_images_placeholder, logits)
-
-        # # Build a Graph that trains the model with one batch of examples and
-        # # updates the model parameters.
-        # train_op = net.train(loss, global_step)
-
-        # tf.summary.scalar('loss', loss)
+        # Build a Graph that computes the logits predictions from the
+        # inference model.
+        logits = net.inference(image)
 
         # Create a saver.
         saver = tf.train.Saver(tf.global_variables())
 
-        # train_op = tf.train.AdamOptimizer(learning_rate=1e-5).minimize(loss, global_step=global_step)
+        with tf.Session() as sess:
+            # Find previous model and restore it
+            ckpt = tf.train.get_checkpoint_state(model_dir)
+            if ckpt and ckpt.model_checkpoint_path:
+                print("Restoring model...")
+                try:
+                    saver.restore(sess, ckpt.model_checkpoint_path)
+                    print("Model restored")
+                except ValueError:
+                    print("Can not restore model")
 
-        # summary for tensorboard graph
-        # summary_op = tf.summary.merge_all()
-
-        # Build an initialization operation to run below.
-        init = tf.global_variables_initializer()
-        # Start running operations on the Graph. allow_soft_placement must be set to
-        # True to build towers on GPU, as some of the ops do not have GPU
-        # implementations.
-        sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
-
-        try:
-            os.mkdir(checkpoint_dir)
-        except:
-            pass
-
-        sess.run(init)
-        print("\nRunning session\n")
-
-        # restore previous model if there is one
-        ckpt = tf.train.get_checkpoint_state(checkpoint_dir + "training")
-        if ckpt and ckpt.model_checkpoint_path:
-            print("Restoring previous model...")
-            try:
-                saver.restore(sess, ckpt.model_checkpoint_path)
-                print("Model restored")
-            except:
-                print("Could not restore model")
-                pass
-
-      #   # Summary op
-      #   # graph_def = sess.graph.as_graph_def(add_shapes=True)
-      #   # summary_writer = tf.summary.FileWriter(checkpoint_dir+"training", graph=sess.graph)
-
-      #   step = int(sess.run(global_step))
-      #   gstep = step
-      #   while gstep < FLAGS.max_steps:
-      #       start_time = time.time()
-      #       original, gray = image.read_images(image_list, cfg.BATCH_SIZE)
-      #       feed_dict = {\
-		    #     original_images_placeholder: original,\
-		    #     gray_images_placeholder: gray\
-		    # }
-      #       _, loss_value = sess.run([train_op, loss], feed_dict=feed_dict)
-      #       duration = time.time() - start_time
-
-      #       assert not np.isnan(loss_value), 'Model diverged with loss = NaN'
-
-      #       if step % 1 == 0:
-      #           num_examples_per_step = cfg.BATCH_SIZE
-      #           examples_per_sec = num_examples_per_step / duration
-      #           sec_per_batch = duration
-
-      #           format_str = ('%s: step %d, loss = %.2f (%.1f examples/sec; %.3f '
-      #                         'sec/batch)')
-      #           print(format_str % (datetime.now(), step, loss_value,
-      #                               examples_per_sec, sec_per_batch))
-
-      #       # if step % 10 == 0:
-      #       #     summary_str = sess.run(summary_op)
-      #       #     summary_writer.add_summary(summary_str, step)
-
-      #       # Save the model checkpoint periodically.
-      #       if step % 1000 == 0 or (gstep + 1) == FLAGS.max_steps:
-      #           print("Saving model")
-      #           saver.save(sess, checkpoint_dir + "training/checkpoint", global_step=global_step)
-
-      #       step += 1
-      #       gstep = int(sess.run(global_step))
-
-        i = cv2.imread(image)
-        i = cv2.resize(i, (160,144)).astype('float')
-        testimg = np.zeros((1,144,160,3))
-        testimg[0,:,:,:] = i
-
-        output = sess.run([logits], feed_dict={gray_images_placeholder:testimg})[0]
+        output = sess.run([logits])[0]
         dir_out = image[:image.index('.png')]+'_output.png'
         print ('Store output at '+dir_out)
-        cv2.imwrite(dir_out, output[0,:,:,:])
-
-
-        return
-
-
-def main(argv=None):
-    parser = OptionParser(usage='usage')
-    parser.add_option('-c', '--checkpoint_dir',          type='str')
-    parser.add_option('-d', '--data_dir', type='str')
-
-    opts, args = parser.parse_args()
-    opts = vars(opts)
-
-    checkpoint_dir = opts['checkpoint_dir']
-    data_dir = opts['data_dir']
-
-    if checkpoint_dir is None:
-        print ("checkpoint_dir is required")
-        exit()
-
-    print()
-    print('checkpoint_dir: ' + str(checkpoint_dir))
-    print('data_dir:       ' + str(data_dir))
-    print()
-
-    # pattern = "*.png"
-    # image_list = list()
-    # for d, s, fList in os.walk(data_dir+'/images'):
-    #     for filename in fList:
-    #         if fnmatch.fnmatch(filename, pattern):
-    #             image_list.append(os.path.join(d, filename))
-
-    # print(str(len(image_list)) + ' images...')
-    test(checkpoint_dir, data_dir)
+        cv2.imwrite(dir_out, output[0, :, :, :])
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Train a colorization model.')
+    parser.add_argument('model_dir', help='The model directory')
+    parser.add_argument('image', help='Path to the testing image file')
 
-    if sys.argv[1] == "--help" or sys.argv[1] == "-h" or len(sys.argv) < 2:
-        print()
-        print("-c --checkpoint_dir <str> [path to save the model]")
-        print("-d --data_dir       <str> [path to root image folder]")
-        print()
-        exit()
+    args = parser.parse_args()
 
-    tf.app.run()
+    test(args.model_dir, args.image)
