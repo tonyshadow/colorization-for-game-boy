@@ -79,14 +79,15 @@ def train(model_dir, image_list):
 
         model_dir = os.path.join(model_dir, 'model')
 
-        # Restore previous model
+        # Find previous model and restore it
         ckpt = tf.train.get_checkpoint_state(model_dir)
-        print("Finding previous model...")
-        try:
-            saver.restore(sess, ckpt.model_checkpoint_path)
-            print("Model restored")
-        except ValueError:
-            print("No previous model")
+        if ckpt and ckpt.model_checkpoint_path:
+            print("Restoring model...")
+            try:
+                saver.restore(sess, ckpt.model_checkpoint_path)
+                print("Model restored")
+            except ValueError:
+                print("Can not restore model")
 
         step = int(sess.run(global_step))
         gstep = step
@@ -97,6 +98,7 @@ def train(model_dir, image_list):
 
             assert not np.isnan(loss_value), 'Model diverged with loss = NaN'
 
+            step += 1
             if step % 1 == 0:
                 num_examples_per_step = cfg.BATCH_SIZE
                 examples_per_sec = num_examples_per_step / duration
@@ -116,7 +118,6 @@ def train(model_dir, image_list):
                 print("Saving model")
                 saver.save(sess, os.path.join(model_dir, 'model.ckpt'), global_step=global_step)
 
-            step += 1
             gstep = int(sess.run(global_step))
 
         return
