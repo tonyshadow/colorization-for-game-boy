@@ -8,7 +8,7 @@ An example training set is in train.
 
 Run:
 
-  train.py [-h] data_dir model_dir
+  python train.py [-h] data_dir model_dir
   
 
 ## Test:
