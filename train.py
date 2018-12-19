@@ -30,7 +30,7 @@ def train(model_dir, image_paths):
     loss = net.loss(original_images, logits)
 
     # Optimization
-    train_op = tf.train.AdadeltaOptimizer(learning_rate=1e-5).minimize(loss, global_step=global_step)
+    train_op = tf.train.AdamOptimizer(learning_rate=1e-5).minimize(loss, global_step=global_step)
 
     # Create a saver.
     saver = tf.train.Saver(tf.global_variables())
