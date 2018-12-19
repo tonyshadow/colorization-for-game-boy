@@ -42,9 +42,6 @@ def train(model_dir, image_paths):
     with tf.Session() as sess:
         sess.run(init)
 
-        # Create summary writer
-        # summary_writer = tf.summary.FileWriter(checkpoint_dir + "model", sess.graph)
-
         model_dir = os.path.join(model_dir, 'model')
 
         # Find previous model and restore it
@@ -61,6 +58,7 @@ def train(model_dir, image_paths):
         while step < cfg.MAX_STEPS:
             start_time = time.time()
             original, gray = image.read_images(image_paths, cfg.BATCH_SIZE)
+            original, gray = tf.convert_to_tensor(original), tf.convert_to_tensor(gray)
             _, loss_value = sess.run([train_op, loss], feed_dict={gray_images: gray, original_images: original})
             duration = time.time() - start_time
 
@@ -73,10 +71,6 @@ def train(model_dir, image_paths):
 
                 format_str = '%s: step %d, loss = %.2f (%.1f examples/sec; %.3f sec/batch'
                 print(format_str % (datetime.now(), step, loss_value, examples_per_sec, sec_per_batch))
-
-            # if step % 10 == 0:
-            #     summary_str = sess.run(summary_op)
-            #     summary_writer.add_summary(summary_str, step)
 
             # Save the model checkpoint periodically.
             if step % 100 == 0 or step == cfg.MAX_STEPS:
