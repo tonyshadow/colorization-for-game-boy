@@ -18,7 +18,7 @@ def test(model_dir, image_dir):
 
     # Build a Graph that computes the logits predictions from the
     # inference model.
-    logits = net.inference(image)
+    logits = net.inference(tf.convert_to_tensor(image))
 
     # Create a saver.
     saver = tf.train.Saver(tf.global_variables())
