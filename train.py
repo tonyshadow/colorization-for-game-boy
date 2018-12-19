@@ -58,7 +58,6 @@ def train(model_dir, image_paths):
         while step < cfg.MAX_STEPS:
             start_time = time.time()
             original, gray = image.read_images(image_paths, cfg.BATCH_SIZE)
-            original, gray = tf.convert_to_tensor(original), tf.convert_to_tensor(gray)
             _, loss_value = sess.run([train_op, loss], feed_dict={gray_images: gray, original_images: original})
             duration = time.time() - start_time
 
