@@ -28,7 +28,7 @@ def inference(inputs):
     conv12 = tf.layers.conv2d(conv11, 64, 3, **kwargs)
     conv13 = tf.image.resize_nearest_neighbor(conv12, [2 * conv12.shape[1], 2 * conv12.shape[2]])
     conv14 = tf.layers.conv2d(conv13, 32, 3, **kwargs)
-    conv15 = tf.layers.conv2d(conv14, 3, 3, padding='same', activation=tf.nn.sigmoid,
+    conv15 = tf.layers.conv2d(conv14, 3, 3, padding='same', activation=tf.nn.tanh,
                               kernel_initializer=tf.truncated_normal_initializer(stddev=0.1),
                               bias_initializer=tf.constant_initializer(0.1))
     conv16 = tf.image.resize_nearest_neighbor(conv15, [2 * conv15.shape[1], 2 * conv15.shape[2]])
