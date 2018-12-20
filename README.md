@@ -12,10 +12,10 @@ Run:
   
 
 ## Test:
-We have an example model in model, and some test pics from Zelda games in test. 
+We have an example model in samplemodel, and some test pics from Zelda games in test. 
 
 Run:
 
-  python test.py model/ test/1.png
+  python test.py samplemodel/ test/1.png
   
   
