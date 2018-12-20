@@ -14,3 +14,8 @@ Run:
 ## Test:
 We have an example model in model, and some test pics from Zelda games in test. 
 
+Run:
+
+  python test.py model/ test/1.png
+  
+  
